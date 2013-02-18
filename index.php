@@ -2,6 +2,23 @@
 
 require(".db.config.php");
 
+$id_re = "/^[0-9]{1,10}$/";
+$alias_re = "/^[\w\d\-]{1,30}$/";
+$_requestedItem = "";
+if (isset($_GET['sv'])) {
+  $q = $_GET['sv'];
+  if (preg_match($id_re, $q) === 1) {
+    $query = "SELECT * FROM vines WHERE id = '$q' LIMIT 1";
+  } else if (preg_match($alias_re, $q) === 1) {
+    $query = "SELECT * FROM vines WHERE alias = '$q' LIMIT 1";
+  }
+  $result = $mysqli->query($query);
+  if ($result->num_rows > 0) {
+    $row = $result->fetch_object();
+    $_requestedItem = "<script>var _requestedItem = " . json_encode($row) . ";</script>";
+  }
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -13,35 +30,45 @@ require(".db.config.php");
 		<link href="soundvine.css" rel="stylesheet">
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 		<script src="soundvine.js"></script>
+      <?=$_requestedItem?>
+		<!--    Disabled video.js until there's more time to tweak it:-->
 		<!--		<link href="http://vjs.zencdn.net/c/video-js.css" rel="stylesheet">-->
 		<!--		<script src="http://vjs.zencdn.net/c/video.js"></script>--><!--		<script>-->
 		<!--			_V_.options.flash.swf = "video-js.swf";--><!--			_V_.options.techOrder = ['html5', 'flash'];-->
 		<!--			_V_.ControlBar.prototype.options.components = {'playToggle':{}}--><!--		</script>-->
 	</head>
-	<body>
-		<h1>soundvine</h1>
+	<body<?=$_requestedItem ? ' class="viewer"' : ''?>>
+		<h1><a href="http://soundvine.co">soundvine</a></h1>
 
-		<div class="big_input">
-			<label for="vine_url">Vine:</label>
-			<input type="text" id="vine_url" placeholder="Paste a Vine link" value="http://t.co/DoB26eFI">
-			<input type="hidden" id="video_url">
-			<input type="hidden" id="alias" value="none">
+		<div class="mini">
+			<a href="http://soundvine.co">Make your own</a>
 		</div>
-		<div class="big_input">
-			<label for="audio_url">Audio:</label>
-			<input type="text" id="audio_url" placeholder="Paste an audio link"
-				   value="http://mattmontag.com/music/Audible Automan.mp3">
-		</div>
-		<div>
-			<label for="video_speed">Playback speed:</label>
-			<select id="video_speed">
-				<option>0.25
-				<option>0.5
-				<option selected>1.0
-				<option>1.5
-			</select>
-			<button type="button" class="btn" id="preview">Preview</button>
-			<button type="button" class="btn" id="submit">Combine</button>
+		<div class="masthead">
+			<div class="input_row big_input">
+				<label for="vine_url">Vine:</label>
+				<input type="text" id="vine_url" placeholder="Paste a Vine link" value="">
+				<input type="hidden" id="video_url">
+			</div>
+			<div class="input_row big_input">
+				<label for="audio_url">Audio:</label>
+				<input type="text" id="audio_url" placeholder="Paste an audio link"
+					   value="">
+			</div>
+			<div class="input_row advanced">
+				<label for="alias">soundvine.co/</label>
+				<input type="text" id="alias" placeholder="some-name" maxlength="30">
+				<label for="video_speed">Video playback speed:</label>
+				<select id="video_speed">
+					<option>0.25
+					<option>0.5
+					<option selected>1.0
+					<option>1.5
+				</select>
+			</div>
+			<div class="input_row">
+				<button type="button" class="btn" id="preview">Preview</button>
+				<button type="button" class="btn" id="submit">Create</button>
+			</div>
 		</div>
 		<div id="status">
 			<span class="message"></span> <span class="dismiss"></span>
@@ -58,12 +85,12 @@ require(".db.config.php");
 				<source src="" type="video/mp4">
 			</video>
 			<audio id="audio" src="" loop="true"></audio>
-      <div class="video_border"></div>
+			<div class="video_border"></div>
 		</div>
-    <div class="recent">
-        <h2>Recent:</h2>
-
-      </div>
+		<div class="recent">
+			<h2>Recent:</h2>
+			<ul class="links"></ul>
+		</div>
 		<script type="text/javascript">
 
 			var _gaq = _gaq || [];

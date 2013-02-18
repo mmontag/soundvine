@@ -11,7 +11,7 @@ if (preg_match('/^[\w\d-]{1,30}$/', $id) !== 1) {
 
 $query = "SELECT * FROM vines WHERE id = '$id' LIMIT 1";
 $result = $mysqli->query($query);
-if ($result->num_rows() < 1) {
+if ($result->num_rows < 1) {
   header(':', true, 404);
   echo json_encode(array(
     "error" => "No records matched the query"

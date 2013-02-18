@@ -5,7 +5,7 @@ $timeout = 5;
 
 if (preg_match('/^(http|https):\/\/(vine\.co|t\.co)\//',$url) !== 1) {
   header(':', true, 400);
-  die("Not recognized as a Vine URL.");
+  echo json_encode(array("error"=>"Not recognized as a Vine URL."));
 }
 
 $ch = curl_init();
@@ -29,6 +29,11 @@ preg_match("#$image_re#", $content, $matches);
 $image_url = $matches[1];
 preg_match("#$video_re#", $content, $matches);
 $video_url = $matches[1];
+
+if (!$video_url) {
+  header(':', true, 400);
+  echo json_encode(array("error"=>"Unable to parse video URL from HTML."));
+}
 
 print(json_encode(array(
   'title_url' => $title_url,

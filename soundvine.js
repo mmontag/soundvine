@@ -18,13 +18,21 @@ $(document).ready(function() {
 	SndVine.init();
 });
 
-var SndVine = {};
+var SndVine = {
+	siteRoot: 'soundvine.co'
+};
 
 SndVine.init = function() {
 	this.$video = $('#video');
 	this.$audio = $('#audio');
 	this.$video.get(0).volume = 0;
 	var self = this;
+
+	this.getRecent();
+	if (typeof _requestedItem != 'undefined') {
+		this.load(_requestedItem);
+	}
+
 	$('#video, .video_border').on('click', function(event) {
 		var video = $('#video').get(0);
 		if (video.paused) {
@@ -49,6 +57,25 @@ SndVine.init = function() {
 	$('#vine_url').on('change', function() {
 		// Clear the hidden video_url so that stale values aren't used.
 		$('#video_url').val('');
+	});
+	$('.dismiss').on('click', function() {
+		$('#status').hide();
+	});
+	$('.mini a').on('click', function(event) {
+		$('body').removeClass('viewer');
+		event.preventDefault();
+	});
+	$("#alias").keyup(function(event){
+		var str = $("#alias").val();
+		if( str != "" ) {
+			var regx = /^[A-Za-z0-9\-]+$/;
+			if (!regx.test(str)) {
+				SndVine.statusMessage("Only alphanumeric and dash (-) characters are allowed in the path.", "error");
+
+			} else {
+				$('#status').hide();
+			}
+		}
 	});
 };
 
@@ -96,7 +123,8 @@ SndVine.getFormData = function(k) {
 				k(data);
 			},
 			error: function(result) {
-				SndVine.statusMessage("Oops, trouble extracting a video from that Vine link there.", "error");
+				SndVine.statusMessage("Oops, trouble extracting a video from the Vine link you provided." +
+						"Vine links that start with <strong>t.co</strong> and <strong>vine.co</strong> should work.", "error");
 				console.log("error getting vine data.");
 			}
 		});
@@ -107,11 +135,12 @@ SndVine.getFormData = function(k) {
 
 SndVine.statusMessage = function(message, type) {
 	type = type || "notice";
-	$('.status').show().removeClass().addClass(type);
-	$('.status').text(message);
+	$('#status').show().removeClass().addClass(type);
+	$('#status .message').html(message);
 };
 
 SndVine.save = function() {
+	// TODO: remove refs to SndVine and use 'this'
 	this.getFormData(function(formData) {
 		$.ajax({
 			url: "createSoundvine.php",
@@ -119,14 +148,40 @@ SndVine.save = function() {
 			dataType: "json",
 			data: formData,
 			success: function(data) {
-				var url = "http://soundvine.co/" + data.id;
-				SndVine.statusMessage("<a href='"+url+"'>"+url+"</a>", "success");
+				var url = "http://" + SndVine.siteRoot + "/" + SndVine.getUrlFromData(data);
+				SndVine.statusMessage("Your soundvine has been saved here: <strong><a href='"+url+"'>"+url+"</a></strong>", "success");
 				console.log("saved:", data);
 			},
 			error: function(data) {
-				SndVine.statusMessage("Oops, there was an error creating your Soundvine link.", "error");
+				SndVine.statusMessage("Oops, there was an error creating your Soundvine link. ", "error");
 				console.log("error saving:", data);
 			}
 		});
+	});
+};
+
+SndVine.getUrlFromData = function(data) {
+	return data.url || data.alias || data.id;
+}
+
+SndVine.getRecent = function() {
+	var $recent = $('.recent');
+	var ul = $('<ul></ul>');
+	$.ajax({
+		url: "getRecent.php",
+		dataType: "json",
+		success: function(data) {
+			for (var i = 0, length = data.length; i < length; i++) {
+				var url = SndVine.siteRoot + '/' + SndVine.getUrlFromData(data[i]);
+				var li = $('<li><a href="http://' + url +'">' + url + '</a></li>');
+				ul.append(li);
+			}
+			$recent.find('ul').replaceWith(ul);
+			$recent.show();
+		},
+		error: function() {
+			// Just hide the recent thing...
+			$recent.hide();
+		}
 	});
 };

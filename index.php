@@ -51,7 +51,7 @@ if (isset($_GET['sv'])) {
 			</div>
 			<div class="input_row big_input">
 				<label for="audio_url">Audio:</label>
-				<input type="text" id="audio_url" placeholder="Paste an audio link"
+				<input type="text" id="audio_url" placeholder="Paste an MP3 link"
 					   value="">
 			</div>
 			<div class="input_row advanced">

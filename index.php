@@ -91,6 +91,10 @@ if (isset($_GET['sv'])) {
 			<h2>Recent:</h2>
 			<ul class="links"></ul>
 		</div>
+		<div class="footer">
+			Right now soundvine only supports Chrome and Safari. 
+		</div>
+		<script>if ((/webkit/i).test(navigator.userAgent)) { $('.footer').hide() }</script>
 		<script type="text/javascript">
 
 			var _gaq = _gaq || [];
